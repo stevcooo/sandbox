@@ -24,28 +24,48 @@ var CustomerComponent = (function () {
     function CustomerComponent(fb) {
         this.fb = fb;
         this.customer = new customer_1.Customer();
+        this.validationMessage = {
+            required: 'Please enter your email address.',
+            pattern: 'Please enter a valid email address.'
+        };
     }
     CustomerComponent.prototype.ngOnInit = function () {
+        var _this = this;
         this.customerForm = this.fb.group({
             firstName: ['', [forms_1.Validators.required, forms_1.Validators.minLength(3)]],
             lastName: ['', [forms_1.Validators.required, forms_1.Validators.maxLength(50)]],
-            email: ['', [forms_1.Validators.required, forms_1.Validators.pattern("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+")]],
+            emailGroup: this.fb.group({
+                email: ['', [forms_1.Validators.required, forms_1.Validators.pattern("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+")]]
+            }),
             phone: '',
             notification: 'email',
             rating: ['', ratingRange(1, 5)],
             sendCatalog: true
         });
+        this.customerForm.get('notification').valueChanges
+            .subscribe(function (value) { return _this.setNotification(value); });
+        var emailControl = this.customerForm.get('emailGroup.email');
+        emailControl.valueChanges.subscribe(function (value) { return _this.setMessage(emailControl); });
     };
     CustomerComponent.prototype.populateTestData = function () {
         this.customerForm.patchValue({
             firstName: 'Jack',
+            lastName: 'kostoski',
             email: 'stevan@kostoski.com',
+            rating: 4,
             sendCatalog: false
         });
     };
     CustomerComponent.prototype.save = function () {
         console.log(this.customerForm);
         console.log('Saved: ' + JSON.stringify(this.customerForm.value));
+    };
+    CustomerComponent.prototype.setMessage = function (c) {
+        var _this = this;
+        this.emailMessage = '';
+        if ((c.touched || c.dirty) && c.errors) {
+            this.emailMessage = Object.keys(c.errors).map(function (key) { return _this.validationMessage[key]; }).join(' ');
+        }
     };
     CustomerComponent.prototype.setNotification = function (nofifyVia) {
         var phoneControl = this.customerForm.get('phone');
